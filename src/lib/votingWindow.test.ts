@@ -13,7 +13,7 @@ describe('getVotingDayKey', () => {
   });
 
   it('is correct across the spring-forward DST transition', () => {
-    // 2026-03-09 is the first day of EDT (UTC-4) in the US.
+    // DST begins 2026-03-08 in the US; 2026-03-09 falls within EDT (UTC-4).
     expect(getVotingDayKey(new Date('2026-03-09T08:59:00Z'))).toBe('2026-03-08');
     expect(getVotingDayKey(new Date('2026-03-09T09:00:00Z'))).toBe('2026-03-09');
   });

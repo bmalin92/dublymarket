@@ -15,6 +15,7 @@ export default function Home() {
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
   const [voteError, setVoteError] = useState<string | null>(null);
+  const [voteSuccess, setVoteSuccess] = useState(false);
   const [nextResetAt, setNextResetAt] = useState<string | null>(null);
   const [marketClosed, setMarketClosed] = useState(false);
 
@@ -35,6 +36,8 @@ export default function Home() {
     if (!deviceId || !name) {
       return;
     }
+
+    setVoteSuccess(false);
 
     const response = await fetch('/api/vote', {
       method: 'POST',
@@ -58,6 +61,7 @@ export default function Home() {
     }
 
     setVoteError(null);
+    setVoteSuccess(true);
     setNextResetAt(data.nextResetAt);
     fetchMarket();
   }
@@ -72,6 +76,7 @@ export default function Home() {
     setDeviceId(getOrCreateDeviceId());
     setName(null);
     setVoteError(null);
+    setVoteSuccess(false);
     setNextResetAt(null);
   }
 
@@ -96,6 +101,13 @@ export default function Home() {
       {voteError && (
         <div className="rounded bg-amber-900/40 px-3 py-2 text-sm text-amber-200">
           {voteError}
+          {nextResetAt && <> Resets at {new Date(nextResetAt).toLocaleString()}.</>}
+        </div>
+      )}
+
+      {voteSuccess && !voteError && (
+        <div className="rounded bg-emerald-900/40 px-3 py-2 text-sm text-emerald-200">
+          Vote recorded!
           {nextResetAt && <> Resets at {new Date(nextResetAt).toLocaleString()}.</>}
         </div>
       )}
