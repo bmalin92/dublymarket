@@ -92,10 +92,28 @@ describe('POST /api/guess', () => {
 
     expect(response.status).toBe(200);
     expect(updateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ healer: 'Restoration Druid', voter_name: 'Grug' })
+      expect.objectContaining({ healer: 'Restoration Druid', voter_name: 'Grug', device_id: 'device-1' })
     );
     expect(json.ok).toBe(true);
     expect(typeof json.nextResetAt).toBe('string');
+  });
+
+  it('updates an existing guess if the name matches but deviceId is different', async () => {
+    const { client, updateMock } = createFakeSupabaseClient({
+      existingGuesses: [{ id: 'vote-123', voted_at: '2026-06-01T10:00:00.000Z', healer: 'Holy Priest' }],
+    });
+    vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
+
+    const response = await POST(
+      makeRequest({ deviceId: 'different-device', name: 'Grug', healer: 'Restoration Druid' })
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ healer: 'Restoration Druid', voter_name: 'Grug', device_id: 'different-device' })
+    );
+    expect(json.ok).toBe(true);
   });
 
   it('accepts a guess when the only existing guess is from a prior guessing day', async () => {

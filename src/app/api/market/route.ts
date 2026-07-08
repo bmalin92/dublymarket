@@ -15,6 +15,7 @@ export async function GET() {
     healer: row.healer,
     guessedAt: row.voted_at,
     deviceId: row.device_id,
+    voterName: row.voter_name,
   }));
   const { total, odds } = calculateOdds(guesses);
   const { points, seriesNames } = buildGraphSeries(guesses);

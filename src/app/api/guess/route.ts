@@ -33,17 +33,29 @@ export async function POST(request: Request) {
   const todayKey = getGuessingDayKey(now);
   const lookback = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
-  const { data: recentGuesses, error: fetchError } = await supabase
-    .from('votes')
-    .select('id, voted_at, healer')
-    .eq('device_id', body.deviceId)
-    .gte('voted_at', lookback.toISOString());
+  const [deviceCheck, nameCheck] = await Promise.all([
+    supabase
+      .from('votes')
+      .select('id, voted_at, healer')
+      .eq('device_id', body.deviceId)
+      .gte('voted_at', lookback.toISOString()),
+    supabase
+      .from('votes')
+      .select('id, voted_at, healer')
+      .eq('voter_name', body.name)
+      .gte('voted_at', lookback.toISOString())
+  ]);
 
-  if (fetchError) {
+  if (deviceCheck.error || nameCheck.error) {
     return NextResponse.json({ error: 'Failed to check existing guesses' }, { status: 500 });
   }
 
-  const todayGuess = (recentGuesses ?? []).find(
+  const recentGuesses = [
+    ...(deviceCheck.data ?? []),
+    ...(nameCheck.data ?? [])
+  ];
+
+  const todayGuess = recentGuesses.find(
     (guess: { voted_at: string }) => getGuessingDayKey(new Date(guess.voted_at)) === todayKey
   );
 
@@ -57,6 +69,7 @@ export async function POST(request: Request) {
         voter_name: body.name,
         ip_address: ipAddress,
         voted_at: now.toISOString(),
+        device_id: body.deviceId,
       })
       .eq('id', todayGuess.id);
 
