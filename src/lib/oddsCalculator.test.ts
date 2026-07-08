@@ -31,7 +31,7 @@ describe('buildGraphSeries', () => {
     expect(seriesNames).toEqual([]);
   });
 
-  it('builds one point per voting day and caps series at top 5 plus Other', () => {
+  it('builds one point per voting day and includes all 9 healer options', () => {
     const votes: VoteRow[] = [
       { healer: 'Holy Priest', votedAt: '2026-06-01T12:00:00.000Z' },
       { healer: 'Discipline Priest', votedAt: '2026-06-01T12:05:00.000Z' },
@@ -47,8 +47,8 @@ describe('buildGraphSeries', () => {
     expect(points).toHaveLength(2);
     expect(points[0].date).toBe('2026-06-01');
     expect(points[1].date).toBe('2026-06-02');
-    expect(seriesNames).toHaveLength(6);
-    expect(seriesNames).toContain('Other');
+    expect(seriesNames).toHaveLength(HEALER_OPTIONS.length);
+    expect(seriesNames).toEqual([...HEALER_OPTIONS]);
 
     const day2 = points[1];
     const seriesTotal = seriesNames.reduce((sum, name) => sum + Number(day2[name]), 0);
@@ -58,27 +58,8 @@ describe('buildGraphSeries', () => {
     // Holy Priest = 1/6 * 100 = 16.666...% -> rounds to 16.67. Day 2 adds Bard
     // Hunter's vote, bringing the running total to 7 votes while Holy Priest's
     // own count stays at 1, so its cumulative share drops to 1/7 * 100 =
-    // 14.2857...% -> rounds to 14.29. A day-only (non-cumulative) tally would
-    // instead report 0% for Holy Priest on day 2, so this pins the running-total
-    // behavior specifically.
+    // 14.2857...% -> rounds to 14.29.
     expect(points[0]['Holy Priest']).toBe(16.67);
     expect(points[1]['Holy Priest']).toBe(14.29);
-
-    // Tie-break check: by the final (day 2) tally, Holy Priest, Discipline
-    // Priest, Restoration Druid, Restoration Shaman, Holy Paladin, Mistweaver
-    // Monk, and Bard Hunter are all tied at 1/7 votes each (~14.29%), while
-    // Preservation Evoker and DPS sit at 0%. The top-5 cut is taken via a
-    // stable sort over HEALER_OPTIONS order, so among the tied healers the
-    // first 5 in HEALER_OPTIONS order win the cut: Holy Priest, Discipline
-    // Priest, Restoration Druid, Restoration Shaman, Holy Paladin. Mistweaver
-    // Monk and Bard Hunter (also tied) get folded into "Other".
-    expect(seriesNames).toEqual([
-      'Holy Priest',
-      'Discipline Priest',
-      'Restoration Druid',
-      'Restoration Shaman',
-      'Holy Paladin',
-      'Other',
-    ]);
   });
 });

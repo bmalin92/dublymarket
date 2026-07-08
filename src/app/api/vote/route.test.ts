@@ -7,12 +7,16 @@ vi.mock('@/lib/supabaseServer', () => ({
 }));
 
 function createFakeSupabaseClient(options: {
-  existingVotes?: Array<{ voted_at: string }>;
+  existingVotes?: Array<{ id: string; voted_at: string; healer?: string }>;
   fetchError?: { message: string } | null;
   insertError?: { message: string } | null;
+  updateError?: { message: string } | null;
 }) {
-  const { existingVotes = [], fetchError = null, insertError = null } = options;
+  const { existingVotes = [], fetchError = null, insertError = null, updateError = null } = options;
   const insertMock = vi.fn().mockResolvedValue({ error: insertError });
+  const updateMock = vi.fn().mockReturnValue({
+    eq: vi.fn().mockResolvedValue({ error: updateError }),
+  });
   return {
     client: {
       from: vi.fn(() => ({
@@ -22,9 +26,11 @@ function createFakeSupabaseClient(options: {
           })),
         })),
         insert: insertMock,
+        update: updateMock,
       })),
     },
     insertMock,
+    updateMock,
   };
 }
 
@@ -73,18 +79,22 @@ describe('POST /api/vote', () => {
     expect(typeof json.nextResetAt).toBe('string');
   });
 
-  it('rejects a second vote in the same voting day', async () => {
-    const { client } = createFakeSupabaseClient({
-      existingVotes: [{ voted_at: '2026-06-01T10:00:00.000Z' }],
+  it('updates an existing vote in the same voting day', async () => {
+    const { client, updateMock } = createFakeSupabaseClient({
+      existingVotes: [{ id: 'vote-123', voted_at: '2026-06-01T10:00:00.000Z', healer: 'Holy Priest' }],
     });
     vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
 
     const response = await POST(
-      makeRequest({ deviceId: 'device-1', name: 'Grug', healer: 'Holy Priest' })
+      makeRequest({ deviceId: 'device-1', name: 'Grug', healer: 'Restoration Druid' })
     );
     const json = await response.json();
 
-    expect(response.status).toBe(409);
+    expect(response.status).toBe(200);
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ healer: 'Restoration Druid', voter_name: 'Grug' })
+    );
+    expect(json.ok).toBe(true);
     expect(typeof json.nextResetAt).toBe('string');
   });
 
