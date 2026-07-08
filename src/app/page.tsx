@@ -7,6 +7,7 @@ import { OddsGraph } from '@/components/OddsGraph';
 import { MarketStats } from '@/components/MarketStats';
 import { getOrCreateDeviceId, getStoredName, storeName, clearIdentity } from '@/lib/deviceCookie';
 import { MARKET_END_LABEL } from '@/lib/config';
+import { isMarketClosed } from '@/lib/votingWindow';
 import type { MarketResponse } from '@/lib/types';
 
 export default function Home() {
@@ -20,6 +21,7 @@ export default function Home() {
   useEffect(() => {
     setDeviceId(getOrCreateDeviceId());
     setName(getStoredName());
+    setMarketClosed(isMarketClosed(new Date()));
     fetchMarket();
   }, []);
 
