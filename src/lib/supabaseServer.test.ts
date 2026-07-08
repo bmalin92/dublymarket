@@ -22,4 +22,13 @@ describe('getSupabaseServerClient', () => {
     const client = getSupabaseServerClient();
     expect(typeof client.from).toBe('function');
   });
+
+  it('caches and returns the same client instance across calls', async () => {
+    vi.stubEnv('SUPABASE_URL', 'https://example.supabase.co');
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'test-service-role-key');
+    const { getSupabaseServerClient } = await import('./supabaseServer');
+    const first = getSupabaseServerClient();
+    const second = getSupabaseServerClient();
+    expect(second).toBe(first);
+  });
 });
