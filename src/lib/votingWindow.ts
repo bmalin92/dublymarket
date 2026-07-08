@@ -36,18 +36,21 @@ function getEtParts(date: Date): EtParts {
 }
 
 function etWallTimeToUtc(year: number, month: number, day: number, hour: number, minute: number): Date {
-  const utcGuess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
-  const etPartsOfGuess = getEtParts(utcGuess);
-  const etAsUtc = Date.UTC(
-    etPartsOfGuess.year,
-    etPartsOfGuess.month - 1,
-    etPartsOfGuess.day,
-    etPartsOfGuess.hour,
-    etPartsOfGuess.minute,
-    etPartsOfGuess.second,
-  );
-  const offsetMs = utcGuess.getTime() - etAsUtc;
-  return new Date(utcGuess.getTime() + offsetMs);
+  const targetUtcMs = Date.UTC(year, month - 1, day, hour, minute, 0);
+  let utcMs = targetUtcMs;
+  for (let i = 0; i < 2; i++) {
+    const etParts = getEtParts(new Date(utcMs));
+    const etAsUtcMs = Date.UTC(
+      etParts.year,
+      etParts.month - 1,
+      etParts.day,
+      etParts.hour,
+      etParts.minute,
+      etParts.second,
+    );
+    utcMs += targetUtcMs - etAsUtcMs;
+  }
+  return new Date(utcMs);
 }
 
 export function getVotingDayKey(date: Date): string {

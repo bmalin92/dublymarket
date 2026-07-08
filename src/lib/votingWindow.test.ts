@@ -29,6 +29,18 @@ describe('getNextResetTime', () => {
     const result = getNextResetTime(new Date('2026-01-15T10:00:01Z'));
     expect(result.toISOString()).toBe('2026-01-16T10:00:00.000Z');
   });
+
+  it('is correct across the spring-forward DST transition', () => {
+    // Just before 5am ET reset on the spring-forward date itself.
+    const result = getNextResetTime(new Date('2026-03-08T08:00:00Z'));
+    expect(result.toISOString()).toBe('2026-03-08T09:00:00.000Z');
+  });
+
+  it('is correct across the fall-back DST transition', () => {
+    // Just before 5am ET reset on the fall-back date itself.
+    const result = getNextResetTime(new Date('2026-11-01T09:00:00Z'));
+    expect(result.toISOString()).toBe('2026-11-01T10:00:00.000Z');
+  });
 });
 
 describe('isMarketClosed', () => {
