@@ -5,7 +5,7 @@ import { getSupabaseServerClient } from '@/lib/supabaseServer';
 // to guarantee every guess row is counted regardless of table size.
 export const GUESSES_PAGE_SIZE = 1000;
 
-export type RawGuessRow = { healer: string; voted_at: string; device_id: string };
+export type RawGuessRow = { healer: string; voted_at: string; device_id: string; voter_name: string };
 
 export async function fetchAllGuesses(
   pageSize: number = GUESSES_PAGE_SIZE
@@ -18,7 +18,7 @@ export async function fetchAllGuesses(
     const to = from + pageSize - 1;
     const { data, error } = await supabase
       .from('votes')
-      .select('healer, voted_at, device_id')
+      .select('healer, voted_at, device_id, voter_name')
       .order('voted_at', { ascending: true })
       .range(from, to);
 

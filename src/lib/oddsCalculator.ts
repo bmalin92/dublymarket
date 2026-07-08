@@ -6,6 +6,7 @@ export interface GuessRow {
   healer: string;
   guessedAt: string;
   deviceId?: string;
+  voterName?: string;
 }
 
 export function calculateOdds(guesses: GuessRow[]): { total: number; odds: OddsEntry[] } {
@@ -18,8 +19,10 @@ export function calculateOdds(guesses: GuessRow[]): { total: number; odds: OddsE
 
   let fallbackIdCounter = 0;
   for (const guess of sortedGuesses) {
-    const id = guess.deviceId || `fallback-id-${fallbackIdCounter++}`;
-    latestGuessesPerUser.set(id, guess);
+    const key = guess.voterName
+      ? guess.voterName.trim().toLowerCase()
+      : (guess.deviceId || `fallback-id-${fallbackIdCounter++}`);
+    latestGuessesPerUser.set(key, guess);
   }
 
   const counts = new Map<string, number>();

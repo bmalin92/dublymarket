@@ -8,7 +8,7 @@ describe('NameCapture', () => {
     const onSubmit = vi.fn();
     render(<NameCapture onSubmit={onSubmit} />);
 
-    await userEvent.type(screen.getByLabelText(/your name/i), '  Grug ');
+    await userEvent.type(screen.getByLabelText(/^name/i), '  Grug ');
     await userEvent.click(screen.getByRole('button', { name: /continue/i }));
 
     expect(onSubmit).toHaveBeenCalledWith('Grug');
