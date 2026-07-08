@@ -64,11 +64,13 @@ describe('POST /api/vote', () => {
     const response = await POST(
       makeRequest({ deviceId: 'device-1', name: 'Grug', healer: 'Holy Priest' })
     );
+    const json = await response.json();
 
     expect(response.status).toBe(201);
     expect(insertMock).toHaveBeenCalledWith(
       expect.objectContaining({ device_id: 'device-1', voter_name: 'Grug', healer: 'Holy Priest' })
     );
+    expect(typeof json.nextResetAt).toBe('string');
   });
 
   it('rejects a second vote in the same voting day', async () => {
@@ -80,8 +82,54 @@ describe('POST /api/vote', () => {
     const response = await POST(
       makeRequest({ deviceId: 'device-1', name: 'Grug', healer: 'Holy Priest' })
     );
+    const json = await response.json();
 
     expect(response.status).toBe(409);
+    expect(typeof json.nextResetAt).toBe('string');
+  });
+
+  it('accepts a vote when the only existing vote is from a prior voting day', async () => {
+    const { client, insertMock } = createFakeSupabaseClient({
+      // Within the 48h lookback window, but falls in the prior ET voting day
+      // relative to the mocked "now" of 2026-06-01T12:00:00Z (before
+      // 2026-06-01T09:00:00Z UTC / 05:00 ET reset).
+      existingVotes: [{ voted_at: '2026-05-31T09:00:00.000Z' }],
+    });
+    vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
+
+    const response = await POST(
+      makeRequest({ deviceId: 'device-1', name: 'Grug', healer: 'Holy Priest' })
+    );
+
+    expect(response.status).toBe(201);
+    expect(insertMock).toHaveBeenCalledWith(
+      expect.objectContaining({ device_id: 'device-1', voter_name: 'Grug', healer: 'Holy Priest' })
+    );
+  });
+
+  it('returns 500 when checking existing votes fails', async () => {
+    const { client } = createFakeSupabaseClient({ fetchError: { message: 'boom' } });
+    vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
+
+    const response = await POST(
+      makeRequest({ deviceId: 'device-1', name: 'Grug', healer: 'Holy Priest' })
+    );
+
+    expect(response.status).toBe(500);
+  });
+
+  it('returns 500 when inserting the vote fails', async () => {
+    const { client } = createFakeSupabaseClient({
+      existingVotes: [],
+      insertError: { message: 'boom' },
+    });
+    vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
+
+    const response = await POST(
+      makeRequest({ deviceId: 'device-1', name: 'Grug', healer: 'Holy Priest' })
+    );
+
+    expect(response.status).toBe(500);
   });
 
   it('rejects votes after the market close date', async () => {
