@@ -40,15 +40,18 @@ export function VoteOptions({ odds, disabled, disabledReason, onVote, isDark }: 
 
         // Apply glow/shadow:
         // In Dark Mode, all options get a brighter, broader glow matching their class color.
-        // In Light Mode, only Discipline Priest gets a brighter, broader light-mode specific glow (#7F7F7F).
+        // In Light Mode:
+        // - Discipline Priest gets its light-mode specific grey glow (#7F7F7F).
+        // - All other options get a glow matching their class color.
         let textStyle: React.CSSProperties | undefined = undefined;
         if (isDark) {
           textStyle = {
             textShadow: `0 0 3px ${color}, 0 0 3px ${color}, 0 0 8px ${color}, 0 0 8px ${color}, 0 0 20px ${color}`,
           };
-        } else if (isDiscipline) {
+        } else {
+          const glowColor = isDiscipline ? '#7F7F7F' : color;
           textStyle = {
-            textShadow: '0 0 3px #7F7F7F, 0 0 3px #7F7F7F, 0 0 8px #7F7F7F, 0 0 8px #7F7F7F, 0 0 20px #7F7F7F',
+            textShadow: `0 0 3px ${glowColor}, 0 0 3px ${glowColor}, 0 0 8px ${glowColor}, 0 0 8px ${glowColor}, 0 0 20px ${glowColor}`,
           };
         }
 
