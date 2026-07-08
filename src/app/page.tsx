@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { NameCapture } from '@/components/NameCapture';
 import { VoteOptions } from '@/components/VoteOptions';
 import { OddsGraph } from '@/components/OddsGraph';
@@ -24,9 +24,13 @@ export default function Home() {
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
   const [voteError, setVoteError] = useState<string | null>(null);
-  const [voteSuccess, setVoteSuccess] = useState(false);
+  const [hasVotedToday, setHasVotedToday] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [nextResetAt, setNextResetAt] = useState<string | null>(null);
   const [marketClosed, setMarketClosed] = useState(false);
+
+  const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   type Theme = 'light' | 'dark' | 'system';
   const [theme, setTheme] = useState<Theme>('light');
@@ -47,11 +51,16 @@ export default function Home() {
     if (savedReset) {
       if (new Date(savedReset) > new Date()) {
         setNextResetAt(savedReset);
-        setVoteSuccess(true);
+        setHasVotedToday(true);
       } else {
         localStorage.removeItem('nextResetAt');
       }
     }
+
+    return () => {
+      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -104,10 +113,16 @@ export default function Home() {
     const data = await response.json();
 
     if (response.status === 409) {
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
       setVoteError('You already voted today.');
+      errorTimeoutRef.current = setTimeout(() => {
+        setVoteError(null);
+        errorTimeoutRef.current = null;
+      }, 30000);
+
       setNextResetAt(data.nextResetAt);
       localStorage.setItem('nextResetAt', data.nextResetAt);
-      setVoteSuccess(true);
+      setHasVotedToday(true);
       return;
     }
     if (response.status === 403) {
@@ -115,12 +130,29 @@ export default function Home() {
       return;
     }
     if (!response.ok) {
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
       setVoteError('Something went wrong submitting your vote.');
+      errorTimeoutRef.current = setTimeout(() => {
+        setVoteError(null);
+        errorTimeoutRef.current = null;
+      }, 30000);
       return;
     }
 
+    if (errorTimeoutRef.current) {
+      clearTimeout(errorTimeoutRef.current);
+      errorTimeoutRef.current = null;
+    }
     setVoteError(null);
-    setVoteSuccess(true);
+
+    if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+    setHasVotedToday(true);
+    setShowSuccessMessage(true);
+    successTimeoutRef.current = setTimeout(() => {
+      setShowSuccessMessage(false);
+      successTimeoutRef.current = null;
+    }, 30000);
+
     setNextResetAt(data.nextResetAt);
     localStorage.setItem('nextResetAt', data.nextResetAt);
     fetchMarket();
@@ -137,7 +169,8 @@ export default function Home() {
     setDeviceId(getOrCreateDeviceId());
     setName(null);
     setVoteError(null);
-    setVoteSuccess(false);
+    setHasVotedToday(false);
+    setShowSuccessMessage(false);
     setNextResetAt(null);
   }
 
@@ -169,7 +202,7 @@ export default function Home() {
         </div>
       </header>
 
-      {name && !voteSuccess ? (
+      {name && !hasVotedToday ? (
         <div className="text-sm text-slate-650 dark:text-slate-400">
           Voting as <span className="text-slate-900 dark:text-white font-semibold">{name}</span> ·{' '}
           <button type="button" className="underline hover:text-slate-900 dark:hover:text-white transition-colors" onClick={handleNotYou}>
@@ -218,7 +251,7 @@ export default function Home() {
         </div>
       )}
 
-      {voteSuccess && !voteError && (
+      {showSuccessMessage && !voteError && (
         <div className="rounded border px-3 py-2 text-sm bg-emerald-50 text-emerald-900 border-emerald-250 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-900/50">
           Vote recorded!
           {nextResetAt && <> Resets at {formatResetTime(nextResetAt)}. </>}
