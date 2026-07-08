@@ -25,14 +25,22 @@ export function VoteOptions({ odds, disabled, disabledReason, onVote, isDark }: 
         const isHolyPaladin = entry.healer === 'Holy Paladin';
         const isMistweaverMonk = entry.healer === 'Mistweaver Monk';
         const isBardHunter = entry.healer === 'Bard Hunter';
+        const isRestoShaman = entry.healer === 'Restoration Shaman';
+        const isPresEvoker = entry.healer === 'Preservation Evoker';
+        const isDps = entry.healer === 'DPS';
         
         // Classes that should use dark text in Dark Mode due to bright background fills
         const usesDarkTextInDarkMode = isDiscipline || isHolyPriest || isRestoDruid || isHolyPaladin || isMistweaverMonk || isBardHunter;
 
-        // Invert text colors for Discipline Priest, and use same dark text color for other bright classes in Dark Mode only
+        // Classes that should use light text in Light Mode due to dark background fills
+        const usesLightTextInLightMode = isRestoShaman || isPresEvoker || isDps;
+
+        // Invert text colors for Discipline Priest, Shaman, Evoker, and DPS in Light Mode
         let healerTextClass = '';
         if (isDiscipline) {
           healerTextClass = 'text-slate-100 dark:text-slate-800';
+        } else if (usesLightTextInLightMode) {
+          healerTextClass = 'text-slate-100 dark:text-slate-100';
         } else if (usesDarkTextInDarkMode) {
           healerTextClass = 'dark:text-slate-800';
         }
