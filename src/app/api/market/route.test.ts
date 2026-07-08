@@ -22,9 +22,9 @@ describe('GET /api/market', () => {
 
   it('returns volume, odds, and graph data', async () => {
     const votes = [
-      { healer: 'Holy Priest', voted_at: '2026-06-01T12:00:00.000Z' },
-      { healer: 'Holy Priest', voted_at: '2026-06-02T12:00:00.000Z' },
-      { healer: 'Restoration Druid', voted_at: '2026-06-02T12:00:00.000Z' },
+      { healer: 'Holy Priest', voted_at: '2026-06-01T12:00:00.000Z', device_id: 'user-1' },
+      { healer: 'Holy Priest', voted_at: '2026-06-02T12:00:00.000Z', device_id: 'user-2' },
+      { healer: 'Restoration Druid', voted_at: '2026-06-02T12:00:00.000Z', device_id: 'user-3' },
     ];
     const client = mockClientForRange(async () => ({ data: votes, error: null }));
     vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
@@ -50,9 +50,9 @@ describe('GET /api/market', () => {
 
   it('paginates through multiple pages and concatenates all rows', async () => {
     const allVotes = [
-      { healer: 'Holy Priest', voted_at: '2026-06-01T12:00:00.000Z' },
-      { healer: 'Restoration Druid', voted_at: '2026-06-02T12:00:00.000Z' },
-      { healer: 'Mistweaver Monk', voted_at: '2026-06-03T12:00:00.000Z' },
+      { healer: 'Holy Priest', voted_at: '2026-06-01T12:00:00.000Z', device_id: 'user-1' },
+      { healer: 'Restoration Druid', voted_at: '2026-06-02T12:00:00.000Z', device_id: 'user-2' },
+      { healer: 'Mistweaver Monk', voted_at: '2026-06-03T12:00:00.000Z', device_id: 'user-3' },
     ];
     const pageSize = 2;
     let call = 0;

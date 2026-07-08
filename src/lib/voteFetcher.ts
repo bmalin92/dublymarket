@@ -5,7 +5,7 @@ import { getSupabaseServerClient } from '@/lib/supabaseServer';
 // to guarantee every vote row is counted regardless of table size.
 export const VOTES_PAGE_SIZE = 1000;
 
-export type RawVoteRow = { healer: string; voted_at: string };
+export type RawVoteRow = { healer: string; voted_at: string; device_id: string };
 
 export async function fetchAllVotes(
   pageSize: number = VOTES_PAGE_SIZE
@@ -18,7 +18,7 @@ export async function fetchAllVotes(
     const to = from + pageSize - 1;
     const { data, error } = await supabase
       .from('votes')
-      .select('healer, voted_at')
+      .select('healer, voted_at, device_id')
       .order('voted_at', { ascending: true })
       .range(from, to);
 

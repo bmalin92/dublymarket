@@ -14,6 +14,7 @@ export async function GET() {
   const votes: VoteRow[] = (data ?? []).map((row: RawVoteRow) => ({
     healer: row.healer,
     votedAt: row.voted_at,
+    deviceId: row.device_id,
   }));
   const { total, odds } = calculateOdds(votes);
   const { points, seriesNames } = buildGraphSeries(votes);

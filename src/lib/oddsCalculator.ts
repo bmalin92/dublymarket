@@ -5,23 +5,40 @@ import type { OddsEntry, GraphPoint } from './types';
 export interface VoteRow {
   healer: string;
   votedAt: string;
+  deviceId?: string;
 }
 
 export function calculateOdds(votes: VoteRow[]): { total: number; odds: OddsEntry[] } {
+  const latestVotesPerUser = new Map<string, VoteRow>();
+  
+  // Sort chronologically by votedAt to ensure the latest vote replaces earlier ones
+  const sortedVotes = [...votes].sort(
+    (a, b) => new Date(a.votedAt).getTime() - new Date(b.votedAt).getTime()
+  );
+
+  let fallbackIdCounter = 0;
+  for (const vote of sortedVotes) {
+    const id = vote.deviceId || `fallback-id-${fallbackIdCounter++}`;
+    latestVotesPerUser.set(id, vote);
+  }
+
   const counts = new Map<string, number>();
   for (const option of HEALER_OPTIONS) {
     counts.set(option, 0);
   }
-  for (const vote of votes) {
+  for (const vote of latestVotesPerUser.values()) {
     counts.set(vote.healer, (counts.get(vote.healer) ?? 0) + 1);
   }
-  const total = votes.length;
+
+  const total = votes.length; // Absolute total of all guesses ever cast
+  const uniqueUserCount = latestVotesPerUser.size;
+
   const odds: OddsEntry[] = HEALER_OPTIONS.map((healer) => {
     const count = counts.get(healer) ?? 0;
     return {
       healer: healer as Healer,
       count,
-      percentage: total === 0 ? 0 : (count / total) * 100,
+      percentage: uniqueUserCount === 0 ? 0 : (count / uniqueUserCount) * 100,
     };
   });
   return { total, odds };
