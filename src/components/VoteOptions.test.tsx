@@ -15,6 +15,7 @@ describe('VoteOptions', () => {
         disabled={false}
         disabledReason={null}
         onVote={onVote}
+        isDark={false}
       />
     );
 
@@ -30,6 +31,7 @@ describe('VoteOptions', () => {
         disabled={true}
         disabledReason="Enter your name to vote."
         onVote={vi.fn()}
+        isDark={false}
       />
     );
 

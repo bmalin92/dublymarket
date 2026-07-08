@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
   const { data: recentVotes, error: fetchError } = await supabase
     .from('votes')
-    .select('voted_at')
+    .select('id, voted_at, healer')
     .eq('device_id', body.deviceId)
     .gte('voted_at', lookback.toISOString());
 
@@ -43,21 +43,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to check existing votes' }, { status: 500 });
   }
 
-  const alreadyVotedToday = (recentVotes ?? []).some(
+  const todayVote = (recentVotes ?? []).find(
     (vote: { voted_at: string }) => getVotingDayKey(new Date(vote.voted_at)) === todayKey
   );
 
-  if (alreadyVotedToday) {
-    return NextResponse.json(
-      {
-        error: 'Already voted today',
-        nextResetAt: getNextResetTime(now).toISOString(),
-      },
-      { status: 409 }
-    );
-  }
-
   const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+
+  if (todayVote) {
+    const { error: updateError } = await supabase
+      .from('votes')
+      .update({
+        healer: body.healer,
+        voter_name: body.name,
+        ip_address: ipAddress,
+        voted_at: now.toISOString(),
+      })
+      .eq('id', todayVote.id);
+
+    if (updateError) {
+      return NextResponse.json({ error: 'Failed to update vote' }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, nextResetAt: getNextResetTime(now).toISOString() }, { status: 200 });
+  }
 
   const { error: insertError } = await supabase.from('votes').insert({
     device_id: body.deviceId,

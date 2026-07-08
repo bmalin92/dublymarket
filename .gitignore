@@ -5,3 +5,4 @@ node_modules/
 .claude/
 .tokensave/
 *.tsbuildinfo
+npm-cache/

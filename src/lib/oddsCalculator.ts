@@ -46,13 +46,6 @@ export function buildGraphSeries(votes: VoteRow[]): { points: GraphPoint[]; seri
     }
   }
 
-  const { odds: finalOdds } = calculateOdds(votes);
-  const topFive = [...finalOdds]
-    .sort((a, b) => b.percentage - a.percentage)
-    .slice(0, 5)
-    .map((entry) => entry.healer as string);
-  const topFiveSet = new Set(topFive);
-
   const points: GraphPoint[] = [];
   const runningVotes: VoteRow[] = [];
   let voteIndex = 0;
@@ -67,17 +60,11 @@ export function buildGraphSeries(votes: VoteRow[]): { points: GraphPoint[]; seri
     }
     const { odds } = calculateOdds(runningVotes);
     const point: GraphPoint = { date: day };
-    let otherTotal = 0;
     for (const entry of odds) {
-      if (topFiveSet.has(entry.healer)) {
-        point[entry.healer] = Number(entry.percentage.toFixed(2));
-      } else {
-        otherTotal += entry.percentage;
-      }
+      point[entry.healer] = Number(entry.percentage.toFixed(2));
     }
-    point.Other = Number(otherTotal.toFixed(2));
     points.push(point);
   }
 
-  return { points, seriesNames: [...topFive, 'Other'] };
+  return { points, seriesNames: [...HEALER_OPTIONS] };
 }
