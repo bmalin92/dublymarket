@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { GET } from './route';
-import { fetchAllVotes } from '@/lib/voteFetcher';
+import { fetchAllGuesses } from '@/lib/guessFetcher';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
 vi.mock('@/lib/supabaseServer', () => ({
@@ -21,12 +21,12 @@ describe('GET /api/market', () => {
   });
 
   it('returns volume, odds, and graph data', async () => {
-    const votes = [
-      { healer: 'Holy Priest', voted_at: '2026-06-01T12:00:00.000Z' },
-      { healer: 'Holy Priest', voted_at: '2026-06-02T12:00:00.000Z' },
-      { healer: 'Restoration Druid', voted_at: '2026-06-02T12:00:00.000Z' },
+    const guesses = [
+      { healer: 'Holy Priest', voted_at: '2026-06-01T12:00:00.000Z', device_id: 'user-1' },
+      { healer: 'Holy Priest', voted_at: '2026-06-02T12:00:00.000Z', device_id: 'user-2' },
+      { healer: 'Restoration Druid', voted_at: '2026-06-02T12:00:00.000Z', device_id: 'user-3' },
     ];
-    const client = mockClientForRange(async () => ({ data: votes, error: null }));
+    const client = mockClientForRange(async () => ({ data: guesses, error: null }));
     vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
 
     const response = await GET();
@@ -49,15 +49,15 @@ describe('GET /api/market', () => {
   });
 
   it('paginates through multiple pages and concatenates all rows', async () => {
-    const allVotes = [
-      { healer: 'Holy Priest', voted_at: '2026-06-01T12:00:00.000Z' },
-      { healer: 'Restoration Druid', voted_at: '2026-06-02T12:00:00.000Z' },
-      { healer: 'Mistweaver Monk', voted_at: '2026-06-03T12:00:00.000Z' },
+    const allGuesses = [
+      { healer: 'Holy Priest', voted_at: '2026-06-01T12:00:00.000Z', device_id: 'user-1' },
+      { healer: 'Restoration Druid', voted_at: '2026-06-02T12:00:00.000Z', device_id: 'user-2' },
+      { healer: 'Mistweaver Monk', voted_at: '2026-06-03T12:00:00.000Z', device_id: 'user-3' },
     ];
     const pageSize = 2;
     let call = 0;
     const range = vi.fn(async () => {
-      const batch = allVotes.slice(call * pageSize, call * pageSize + pageSize);
+      const batch = allGuesses.slice(call * pageSize, call * pageSize + pageSize);
       call += 1;
       return { data: batch, error: null };
     });
@@ -66,11 +66,11 @@ describe('GET /api/market', () => {
     const from = vi.fn(() => ({ select }));
     vi.mocked(getSupabaseServerClient).mockReturnValue({ from } as any);
 
-    const { data, error } = await fetchAllVotes(pageSize);
+    const { data, error } = await fetchAllGuesses(pageSize);
 
     expect(error).toBeNull();
     expect(data).toHaveLength(3);
-    expect(data).toEqual(allVotes);
+    expect(data).toEqual(allGuesses);
     expect(range).toHaveBeenCalledTimes(2);
   });
 });

@@ -1,15 +1,15 @@
 import type { OddsEntry } from '@/lib/types';
 import { getHealerColor } from '@/lib/colors';
 
-interface VoteOptionsProps {
+interface GuessOptionsProps {
   odds: OddsEntry[];
   disabled: boolean;
   disabledReason: string | null;
-  onVote: (healer: string) => void;
+  onGuess: (healer: string) => void;
   isDark: boolean;
 }
 
-export function VoteOptions({ odds, disabled, disabledReason, onVote, isDark }: VoteOptionsProps) {
+export function GuessOptions({ odds, disabled, disabledReason, onGuess, isDark }: GuessOptionsProps) {
   return (
     <div className="flex flex-col gap-2">
       {disabled && disabledReason && (
@@ -57,7 +57,7 @@ export function VoteOptions({ odds, disabled, disabledReason, onVote, isDark }: 
             key={entry.healer}
             type="button"
             disabled={disabled}
-            onClick={() => onVote(entry.healer)}
+            onClick={() => onGuess(entry.healer)}
             className={`relative overflow-hidden rounded border border-slate-400 dark:border-slate-600 bg-white dark:bg-slate-900/40 px-3 py-2.5 text-left text-sm ${normalTextClass} disabled:cursor-not-allowed disabled:opacity-60 transition-colors hover:border-slate-400 dark:hover:border-slate-600`}
           >
             <span

@@ -1,22 +1,23 @@
 import { NextResponse } from 'next/server';
-import { calculateOdds, buildGraphSeries, type VoteRow } from '@/lib/oddsCalculator';
-import { fetchAllVotes, type RawVoteRow } from '@/lib/voteFetcher';
+import { calculateOdds, buildGraphSeries, type GuessRow } from '@/lib/oddsCalculator';
+import { fetchAllGuesses, type RawGuessRow } from '@/lib/guessFetcher';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const { data, error } = await fetchAllVotes();
+  const { data, error } = await fetchAllGuesses();
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to load votes' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load guesses' }, { status: 500 });
   }
 
-  const votes: VoteRow[] = (data ?? []).map((row: RawVoteRow) => ({
+  const guesses: GuessRow[] = (data ?? []).map((row: RawGuessRow) => ({
     healer: row.healer,
-    votedAt: row.voted_at,
+    guessedAt: row.voted_at,
+    deviceId: row.device_id,
   }));
-  const { total, odds } = calculateOdds(votes);
-  const { points, seriesNames } = buildGraphSeries(votes);
+  const { total, odds } = calculateOdds(guesses);
+  const { points, seriesNames } = buildGraphSeries(guesses);
 
   return NextResponse.json({ volume: total, odds, graph: { points, seriesNames } });
 }
