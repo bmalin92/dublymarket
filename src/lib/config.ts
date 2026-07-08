@@ -13,6 +13,6 @@ export const HEALER_OPTIONS = [
 export type Healer = (typeof HEALER_OPTIONS)[number];
 
 export const MARKET_TIMEZONE = 'America/New_York';
-export const RESET_HOUR = 5;
+export const RESET_HOUR = 3;
 export const MARKET_CLOSE_ET = { year: 2026, month: 8, day: 12 } as const;
 export const MARKET_END_LABEL = 'Aug 12, 2026';
