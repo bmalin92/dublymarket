@@ -53,5 +53,32 @@ describe('buildGraphSeries', () => {
     const day2 = points[1];
     const seriesTotal = seriesNames.reduce((sum, name) => sum + Number(day2[name]), 0);
     expect(seriesTotal).toBeCloseTo(100, 1);
+
+    // Cumulative math check: day 1 has 6 votes total (1 each for 6 healers), so
+    // Holy Priest = 1/6 * 100 = 16.666...% -> rounds to 16.67. Day 2 adds Bard
+    // Hunter's vote, bringing the running total to 7 votes while Holy Priest's
+    // own count stays at 1, so its cumulative share drops to 1/7 * 100 =
+    // 14.2857...% -> rounds to 14.29. A day-only (non-cumulative) tally would
+    // instead report 0% for Holy Priest on day 2, so this pins the running-total
+    // behavior specifically.
+    expect(points[0]['Holy Priest']).toBe(16.67);
+    expect(points[1]['Holy Priest']).toBe(14.29);
+
+    // Tie-break check: by the final (day 2) tally, Holy Priest, Discipline
+    // Priest, Restoration Druid, Restoration Shaman, Holy Paladin, Mistweaver
+    // Monk, and Bard Hunter are all tied at 1/7 votes each (~14.29%), while
+    // Preservation Evoker and DPS sit at 0%. The top-5 cut is taken via a
+    // stable sort over HEALER_OPTIONS order, so among the tied healers the
+    // first 5 in HEALER_OPTIONS order win the cut: Holy Priest, Discipline
+    // Priest, Restoration Druid, Restoration Shaman, Holy Paladin. Mistweaver
+    // Monk and Bard Hunter (also tied) get folded into "Other".
+    expect(seriesNames).toEqual([
+      'Holy Priest',
+      'Discipline Priest',
+      'Restoration Druid',
+      'Restoration Shaman',
+      'Holy Paladin',
+      'Other',
+    ]);
   });
 });
