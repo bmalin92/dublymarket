@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { NameCapture } from '@/components/NameCapture';
-import { VoteOptions } from '@/components/VoteOptions';
+import { GuessOptions } from '@/components/GuessOptions';
 import { OddsGraph } from '@/components/OddsGraph';
 import { MarketStats } from '@/components/MarketStats';
 import { getOrCreateDeviceId, getStoredName, storeName, clearIdentity } from '@/lib/deviceCookie';
 import { MARKET_END_LABEL } from '@/lib/config';
-import { isMarketClosed } from '@/lib/votingWindow';
+import { isMarketClosed } from '@/lib/guessingWindow';
 import type { MarketResponse } from '@/lib/types';
 
 function formatResetTime(isoString: string): string {
@@ -23,8 +23,8 @@ export default function Home() {
   const [market, setMarket] = useState<MarketResponse | null>(null);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
-  const [voteError, setVoteError] = useState<string | null>(null);
-  const [hasVotedToday, setHasVotedToday] = useState(false);
+  const [guessError, setGuessError] = useState<string | null>(null);
+  const [hasGuessedToday, setHasGuessedToday] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [nextResetAt, setNextResetAt] = useState<string | null>(null);
   const [marketClosed, setMarketClosed] = useState(false);
@@ -51,7 +51,7 @@ export default function Home() {
     if (savedReset) {
       if (new Date(savedReset) > new Date()) {
         setNextResetAt(savedReset);
-        setHasVotedToday(true);
+        setHasGuessedToday(true);
       } else {
         localStorage.removeItem('nextResetAt');
       }
@@ -100,12 +100,12 @@ export default function Home() {
     setMarket(data);
   }
 
-  async function handleVote(healer: string) {
+  async function handleGuess(healer: string) {
     if (!deviceId || !name) {
       return;
     }
 
-    const response = await fetch('/api/vote', {
+    const response = await fetch('/api/guess', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ deviceId, name, healer }),
@@ -114,15 +114,15 @@ export default function Home() {
 
     if (response.status === 409) {
       if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
-      setVoteError('You already voted today.');
+      setGuessError('You already guessed today.');
       errorTimeoutRef.current = setTimeout(() => {
-        setVoteError(null);
+        setGuessError(null);
         errorTimeoutRef.current = null;
       }, 30000);
 
       setNextResetAt(data.nextResetAt);
       localStorage.setItem('nextResetAt', data.nextResetAt);
-      setHasVotedToday(true);
+      setHasGuessedToday(true);
       return;
     }
     if (response.status === 403) {
@@ -131,9 +131,9 @@ export default function Home() {
     }
     if (!response.ok) {
       if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
-      setVoteError('Something went wrong submitting your vote.');
+      setGuessError('Something went wrong submitting your guess.');
       errorTimeoutRef.current = setTimeout(() => {
-        setVoteError(null);
+        setGuessError(null);
         errorTimeoutRef.current = null;
       }, 30000);
       return;
@@ -143,10 +143,10 @@ export default function Home() {
       clearTimeout(errorTimeoutRef.current);
       errorTimeoutRef.current = null;
     }
-    setVoteError(null);
+    setGuessError(null);
 
     if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
-    setHasVotedToday(true);
+    setHasGuessedToday(true);
     setShowSuccessMessage(true);
     successTimeoutRef.current = setTimeout(() => {
       setShowSuccessMessage(false);
@@ -168,8 +168,8 @@ export default function Home() {
     localStorage.removeItem('nextResetAt');
     setDeviceId(getOrCreateDeviceId());
     setName(null);
-    setVoteError(null);
-    setHasVotedToday(false);
+    setGuessError(null);
+    setHasGuessedToday(false);
     setShowSuccessMessage(false);
     setNextResetAt(null);
   }
@@ -179,7 +179,7 @@ export default function Home() {
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">What healer will Dub play next season?</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Vote once per day. Change your mind if you want.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Guess once per day. Change your mind if you want.</p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-center">
           <span className="text-xs font-semibold text-slate-450 dark:text-slate-500 uppercase tracking-wider mr-1">Theme</span>
@@ -202,9 +202,9 @@ export default function Home() {
         </div>
       </header>
 
-      {name && !hasVotedToday ? (
+      {name && !hasGuessedToday ? (
         <div className="text-sm text-slate-650 dark:text-slate-400">
-          Voting as <span className="text-slate-900 dark:text-white font-semibold">{name}</span> ·{' '}
+          Guessing as <span className="text-slate-900 dark:text-white font-semibold">{name}</span> ·{' '}
           <button type="button" className="underline hover:text-slate-900 dark:hover:text-white transition-colors" onClick={handleNotYou}>
             not you?
           </button>
@@ -222,13 +222,13 @@ export default function Home() {
       {market && (
         <>
           <div className="grid gap-6 md:grid-cols-3">
-            <VoteOptions
+            <GuessOptions
               odds={market.odds}
               disabled={!name || marketClosed}
               disabledReason={
-                marketClosed ? 'This market is closed.' : !name ? 'Enter your name to vote.' : null
+                marketClosed ? 'This market is closed.' : !name ? 'Enter your name to guess.' : null
               }
-              onVote={handleVote}
+              onGuess={handleGuess}
               isDark={resolvedTheme === 'dark'}
             />
             <div className="md:col-span-2 rounded-xl border border-slate-400 dark:border-slate-600 bg-white/40 dark:bg-slate-900/20 p-4">
@@ -244,18 +244,18 @@ export default function Home() {
         </>
       )}
 
-      {voteError && (
+      {guessError && (
         <div className="rounded border px-3 py-2 text-sm bg-amber-50 text-amber-900 border-amber-250 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-900/50">
-          {voteError}
+          {guessError}
           {nextResetAt && <> Resets at {formatResetTime(nextResetAt)}.</>}
         </div>
       )}
 
-      {showSuccessMessage && !voteError && (
+      {showSuccessMessage && !guessError && (
         <div className="rounded border px-3 py-2 text-sm bg-emerald-50 text-emerald-900 border-emerald-250 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-900/50">
-          Vote recorded!
+          Guess recorded!
           {nextResetAt && <> Resets at {formatResetTime(nextResetAt)}. </>}
-          Update today's vote freely until then.
+          Update today's guess freely until then.
         </div>
       )}
     </main>

@@ -53,7 +53,7 @@ function etWallTimeToUtc(year: number, month: number, day: number, hour: number,
   return new Date(utcMs);
 }
 
-export function getVotingDayKey(date: Date): string {
+export function getGuessingDayKey(date: Date): string {
   const parts = getEtParts(date);
   const dayStart = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
   if (parts.hour < RESET_HOUR) {

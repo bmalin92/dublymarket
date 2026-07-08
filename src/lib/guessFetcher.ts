@@ -2,16 +2,16 @@ import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
 // Number of rows fetched per page. Supabase/PostgREST silently caps unbounded
 // selects at a default max-rows (commonly 1000), so we page through results
-// to guarantee every vote row is counted regardless of table size.
-export const VOTES_PAGE_SIZE = 1000;
+// to guarantee every guess row is counted regardless of table size.
+export const GUESSES_PAGE_SIZE = 1000;
 
-export type RawVoteRow = { healer: string; voted_at: string; device_id: string };
+export type RawGuessRow = { healer: string; voted_at: string; device_id: string };
 
-export async function fetchAllVotes(
-  pageSize: number = VOTES_PAGE_SIZE
-): Promise<{ data: RawVoteRow[] | null; error: { message: string } | null }> {
+export async function fetchAllGuesses(
+  pageSize: number = GUESSES_PAGE_SIZE
+): Promise<{ data: RawGuessRow[] | null; error: { message: string } | null }> {
   const supabase = getSupabaseServerClient();
-  const rows: RawVoteRow[] = [];
+  const rows: RawGuessRow[] = [];
   let from = 0;
 
   while (true) {
@@ -26,7 +26,7 @@ export async function fetchAllVotes(
       return { data: null, error };
     }
 
-    const batch = (data ?? []) as RawVoteRow[];
+    const batch = (data ?? []) as RawGuessRow[];
     rows.push(...batch);
 
     if (batch.length < pageSize) {

@@ -20,11 +20,11 @@ export function NameCapture({ onSubmit }: NameCaptureProps) {
         }
       }}
     >
-      <label htmlFor="voter-name" className="text-sm text-slate-600 dark:text-slate-300 font-medium">
+      <label htmlFor="guesser-name" className="text-sm text-slate-600 dark:text-slate-300 font-medium">
         Your name, for the record:
       </label>
       <input
-        id="voter-name"
+        id="guesser-name"
         className="rounded border border-slate-400 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
         value={name}
         onChange={(event) => setName(event.target.value)}

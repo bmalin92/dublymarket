@@ -52,7 +52,7 @@ const renderCustomLegend = (props: any) => {
 
 export function OddsGraph({ points, seriesNames, isDark }: OddsGraphProps) {
   if (points.length === 0) {
-    return <div className="text-sm text-slate-500 dark:text-slate-400">No votes yet.</div>;
+    return <div className="text-sm text-slate-500 dark:text-slate-400">No guesses yet.</div>;
   }
 
   const gridStroke = isDark ? '#1e293b' : '#e2e8f0';

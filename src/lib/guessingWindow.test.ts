@@ -1,21 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { getVotingDayKey, getNextResetTime, isMarketClosed } from './votingWindow';
+import { getGuessingDayKey, getNextResetTime, isMarketClosed } from './guessingWindow';
 
-describe('getVotingDayKey', () => {
-  it('treats times before 3am ET as belonging to the previous voting day', () => {
+describe('getGuessingDayKey', () => {
+  it('treats times before 3am ET as belonging to the previous guessing day', () => {
     // 2026-01-15 02:59 ET = 2026-01-15 07:59 UTC (EST, UTC-5)
-    expect(getVotingDayKey(new Date('2026-01-15T07:59:00Z'))).toBe('2026-01-14');
+    expect(getGuessingDayKey(new Date('2026-01-15T07:59:00Z'))).toBe('2026-01-14');
   });
 
-  it('treats 3am ET and later as the current voting day', () => {
+  it('treats 3am ET and later as the current guessing day', () => {
     // 2026-01-15 03:00 ET = 2026-01-15 08:00 UTC (EST, UTC-5)
-    expect(getVotingDayKey(new Date('2026-01-15T08:00:00Z'))).toBe('2026-01-15');
+    expect(getGuessingDayKey(new Date('2026-01-15T08:00:00Z'))).toBe('2026-01-15');
   });
 
   it('is correct across the spring-forward DST transition', () => {
     // DST begins 2026-03-08 in the US; 2026-03-09 falls within EDT (UTC-4).
-    expect(getVotingDayKey(new Date('2026-03-09T06:59:00Z'))).toBe('2026-03-08');
-    expect(getVotingDayKey(new Date('2026-03-09T07:00:00Z'))).toBe('2026-03-09');
+    expect(getGuessingDayKey(new Date('2026-03-09T06:59:00Z'))).toBe('2026-03-08');
+    expect(getGuessingDayKey(new Date('2026-03-09T07:00:00Z'))).toBe('2026-03-09');
   });
 });
 

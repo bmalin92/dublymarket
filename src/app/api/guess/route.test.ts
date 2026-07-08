@@ -7,12 +7,12 @@ vi.mock('@/lib/supabaseServer', () => ({
 }));
 
 function createFakeSupabaseClient(options: {
-  existingVotes?: Array<{ id: string; voted_at: string; healer?: string }>;
+  existingGuesses?: Array<{ id: string; voted_at: string; healer?: string }>;
   fetchError?: { message: string } | null;
   insertError?: { message: string } | null;
   updateError?: { message: string } | null;
 }) {
-  const { existingVotes = [], fetchError = null, insertError = null, updateError = null } = options;
+  const { existingGuesses = [], fetchError = null, insertError = null, updateError = null } = options;
   const insertMock = vi.fn().mockResolvedValue({ error: insertError });
   const updateMock = vi.fn().mockReturnValue({
     eq: vi.fn().mockResolvedValue({ error: updateError }),
@@ -22,7 +22,7 @@ function createFakeSupabaseClient(options: {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            gte: vi.fn().mockResolvedValue({ data: existingVotes, error: fetchError }),
+            gte: vi.fn().mockResolvedValue({ data: existingGuesses, error: fetchError }),
           })),
         })),
         insert: insertMock,
@@ -35,14 +35,14 @@ function createFakeSupabaseClient(options: {
 }
 
 function makeRequest(body: unknown) {
-  return new Request('http://localhost/api/vote', {
+  return new Request('http://localhost/api/guess', {
     method: 'POST',
     body: JSON.stringify(body),
     headers: { 'content-type': 'application/json', 'x-forwarded-for': '1.2.3.4' },
   });
 }
 
-describe('POST /api/vote', () => {
+describe('POST /api/guess', () => {
   beforeEach(() => {
     vi.setSystemTime(new Date('2026-06-01T12:00:00Z'));
   });
@@ -63,8 +63,8 @@ describe('POST /api/vote', () => {
     expect(response.status).toBe(400);
   });
 
-  it('records a first vote of the day', async () => {
-    const { client, insertMock } = createFakeSupabaseClient({ existingVotes: [] });
+  it('records a first guess of the day', async () => {
+    const { client, insertMock } = createFakeSupabaseClient({ existingGuesses: [] });
     vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
 
     const response = await POST(
@@ -79,9 +79,9 @@ describe('POST /api/vote', () => {
     expect(typeof json.nextResetAt).toBe('string');
   });
 
-  it('updates an existing vote in the same voting day', async () => {
+  it('updates an existing guess in the same guessing day', async () => {
     const { client, updateMock } = createFakeSupabaseClient({
-      existingVotes: [{ id: 'vote-123', voted_at: '2026-06-01T10:00:00.000Z', healer: 'Holy Priest' }],
+      existingGuesses: [{ id: 'vote-123', voted_at: '2026-06-01T10:00:00.000Z', healer: 'Holy Priest' }],
     });
     vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
 
@@ -98,12 +98,12 @@ describe('POST /api/vote', () => {
     expect(typeof json.nextResetAt).toBe('string');
   });
 
-  it('accepts a vote when the only existing vote is from a prior voting day', async () => {
+  it('accepts a guess when the only existing guess is from a prior guessing day', async () => {
     const { client, insertMock } = createFakeSupabaseClient({
-      // Within the 48h lookback window, but falls in the prior ET voting day
+      // Within the 48h lookback window, but falls in the prior ET guessing day
       // relative to the mocked "now" of 2026-06-01T12:00:00Z (before
-      // 2026-06-01T09:00:00Z UTC / 05:00 ET reset).
-      existingVotes: [{ voted_at: '2026-05-31T09:00:00.000Z' }],
+      // 2026-06-01T07:00:00Z UTC / 03:00 ET reset).
+      existingGuesses: [{ voted_at: '2026-05-31T06:00:00.000Z' }],
     });
     vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
 
@@ -117,7 +117,7 @@ describe('POST /api/vote', () => {
     );
   });
 
-  it('returns 500 when checking existing votes fails', async () => {
+  it('returns 500 when checking existing guesses fails', async () => {
     const { client } = createFakeSupabaseClient({ fetchError: { message: 'boom' } });
     vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
 
@@ -128,9 +128,9 @@ describe('POST /api/vote', () => {
     expect(response.status).toBe(500);
   });
 
-  it('returns 500 when inserting the vote fails', async () => {
+  it('returns 500 when inserting the guess fails', async () => {
     const { client } = createFakeSupabaseClient({
-      existingVotes: [],
+      existingGuesses: [],
       insertError: { message: 'boom' },
     });
     vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
@@ -142,7 +142,7 @@ describe('POST /api/vote', () => {
     expect(response.status).toBe(500);
   });
 
-  it('rejects votes after the market close date', async () => {
+  it('rejects guesses after the market close date', async () => {
     vi.setSystemTime(new Date('2026-08-13T00:00:00Z'));
     const { client } = createFakeSupabaseClient({});
     vi.mocked(getSupabaseServerClient).mockReturnValue(client as any);
