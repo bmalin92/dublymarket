@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { GET, fetchAllVotes } from './route';
+import { GET } from './route';
+import { fetchAllVotes } from '@/lib/voteFetcher';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
 vi.mock('@/lib/supabaseServer', () => ({
