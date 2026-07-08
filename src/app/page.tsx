@@ -28,6 +28,7 @@ export default function Home() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [nextResetAt, setNextResetAt] = useState<string | null>(null);
   const [marketClosed, setMarketClosed] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -56,6 +57,8 @@ export default function Home() {
         localStorage.removeItem('nextResetAt');
       }
     }
+
+    setIsInitialized(true);
 
     return () => {
       if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
@@ -202,16 +205,20 @@ export default function Home() {
         </div>
       </header>
 
-      {name && !hasGuessedToday ? (
-        <div className="text-sm text-slate-650 dark:text-slate-400">
-          Guessing as <span className="text-slate-900 dark:text-white font-semibold">{name}</span> ·{' '}
-          <button type="button" className="underline hover:text-slate-900 dark:hover:text-white transition-colors" onClick={handleNotYou}>
-            not you?
-          </button>
-        </div>
-      ) : !name ? (
-        <NameCapture onSubmit={handleNameSubmit} />
-      ) : null}
+      {isInitialized ? (
+        name && !hasGuessedToday ? (
+          <div className="text-sm text-slate-650 dark:text-slate-400">
+            Guessing as <span className="text-slate-900 dark:text-white font-semibold">{name}</span> ·{' '}
+            <button type="button" className="underline hover:text-slate-900 dark:hover:text-white transition-colors" onClick={handleNotYou}>
+              not you?
+            </button>
+          </div>
+        ) : !name ? (
+          <NameCapture onSubmit={handleNameSubmit} />
+        ) : null
+      ) : (
+        <div className="h-6" />
+      )}
 
       {marketClosed && (
         <div className="rounded border px-3 py-2 text-sm bg-rose-50 text-rose-900 border-rose-250 dark:bg-rose-950/40 dark:text-rose-200 dark:border-rose-900/50">
@@ -224,9 +231,15 @@ export default function Home() {
           <div className="grid gap-6 md:grid-cols-3">
             <GuessOptions
               odds={market.odds}
-              disabled={!name || marketClosed}
+              disabled={!isInitialized || !name || marketClosed}
               disabledReason={
-                marketClosed ? 'This market is closed.' : !name ? 'Enter your name to guess.' : null
+                !isInitialized
+                  ? null
+                  : marketClosed
+                  ? 'This market is closed.'
+                  : !name
+                  ? 'Enter your name to guess.'
+                  : null
               }
               onGuess={handleGuess}
               isDark={resolvedTheme === 'dark'}
