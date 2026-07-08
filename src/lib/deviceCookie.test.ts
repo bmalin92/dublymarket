@@ -28,9 +28,11 @@ describe('deviceCookie', () => {
   });
 
   it('clears both cookies', () => {
-    getOrCreateDeviceId();
+    const originalId = getOrCreateDeviceId();
     storeName('Grug');
     clearIdentity();
     expect(getStoredName()).toBeNull();
+    const newId = getOrCreateDeviceId();
+    expect(newId).not.toBe(originalId);
   });
 });
