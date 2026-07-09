@@ -50,6 +50,14 @@ const renderCustomLegend = (props: any) => {
   );
 };
 
+function formatGraphDate(dateStr: string): string {
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  return `${month}/${day}`;
+}
+
 export function OddsGraph({ points, seriesNames, isDark }: OddsGraphProps) {
   if (points.length === 0) {
     return <div className="text-sm text-slate-500 dark:text-slate-400">No guesses yet.</div>;
@@ -65,7 +73,7 @@ export function OddsGraph({ points, seriesNames, isDark }: OddsGraphProps) {
     <ResponsiveContainer width="100%" height={370}>
       <LineChart data={points} margin={{ top: 5, right: 5, left: -5, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-        <XAxis dataKey="date" stroke={axisStroke} fontSize={12} />
+        <XAxis dataKey="date" stroke={axisStroke} fontSize={12} tickFormatter={formatGraphDate} />
         <YAxis stroke={axisStroke} fontSize={12} unit="%" domain={[0, 100]} width={45} />
         <Tooltip
           contentStyle={{
@@ -75,6 +83,7 @@ export function OddsGraph({ points, seriesNames, isDark }: OddsGraphProps) {
             borderRadius: '0.25rem',
           }}
           labelStyle={{ color: isDark ? '#94a3b8' : '#64748b' }}
+          labelFormatter={formatGraphDate}
         />
         <Legend content={renderCustomLegend} />
         {seriesNames.map((name) => (
